@@ -1,133 +1,65 @@
 # Employee Retention Prediction
 
-## Background Information
-# In this project, we aim to predict which employees are more likely to quit the company.
-# This prediction helps in understanding employee retention better and allows for targeted retention strategies.
+## Overview
 
-## Problem Statement and Business Goals
-# Predicting employee attrition is crucial for optimizing HR strategies and reducing turnover costs.
-# By identifying employees at risk of leaving, the company can take proactive measures to retain valuable staff.
+The **Employee Retention Prediction** project aims to identify employees who are more likely to leave the company, using various features from employee data. By predicting which employees are at risk of quitting, this project helps organizations to implement targeted retention strategies and reduce turnover costs.
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import LabelEncoder
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
-from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report
-import pickle
+## Problem Statement
 
-# Load Dataset
-df = pd.read_csv('employee_data.csv')
+Employee attrition is a significant issue for many companies, affecting their operations and incurring additional costs related to recruitment and training. This project focuses on predicting which employees are likely to leave the company based on historical data, which allows HR departments to proactively address potential issues and retain valuable staff.
 
-# Basic Data Checks
-print("Basic Information:")
-print(df.info())
-print("\nDescriptive Statistics:")
-print(df.describe())
+## Data Description
 
-# Replace 'Attrition' column with integers
-df['Attrition'] = df['Attrition'].apply(lambda x: 1 if x == 'Yes' else 0)
+The dataset used in this project includes employee-related features such as:
 
-# Check for missing data
-print("\nMissing Data Check:")
-print(df.isnull().sum())
+- **Attrition**: Target variable indicating whether an employee left the company (1 for 'Yes', 0 for 'No').
+- **DistanceFromHome**: Distance from the employee's home to the office.
+- **JobRole**: Employee's job role.
+- **MonthlyIncome**: Monthly income of the employee.
+- **BusinessTravel**: Frequency of business travel.
+- **Department**: Department where the employee works.
+- **EducationField**: Field of education of the employee.
+- **Gender**: Gender of the employee.
+- **MaritalStatus**: Marital status of the employee.
+- **StockOptionLevel**: Stock option level of the employee.
 
-# Drop columns that do not change from one employee to the other
-df = df.drop(['EmployeeCount', 'StandardHours', 'Over18'], axis=1)
+## Approach
 
-# Histograms
-print("\nGenerating Histograms:")
-df.hist(figsize=(12, 10), bins=30)
-plt.show()
+1. **Data Preprocessing**:
+   - Load and explore the dataset.
+   - Handle missing values and drop irrelevant columns.
+   - Convert categorical variables to numerical formats using label encoding and one-hot encoding.
 
-# Employee Statistics
-num_left = df['Attrition'].sum()
-num_stayed = len(df) - num_left
-print(f"\nNumber of Employees Who Left: {num_left}")
-print(f"Percentage of Employees Who Left: {num_left / len(df) * 100:.2f}%")
-print(f"Number of Employees Who Stayed: {num_stayed}")
-print(f"Percentage of Employees Who Stayed: {num_stayed / len(df) * 100:.2f}%")
+2. **Exploratory Data Analysis (EDA)**:
+   - Generate histograms, KDE plots, and boxplots to visualize the distribution and relationships within the data.
 
-# Compare Means and Std Deviation
-print("\nComparison of Means and Standard Deviations:")
-print(df.groupby('Attrition').mean())
-print(df.groupby('Attrition').std())
+3. **Feature Scaling**:
+   - Standardize features using Min-Max Scaling to prepare them for model training.
 
-# KDE Plot for 'DistanceFromHome'
-plt.figure(figsize=(12,7))
-sns.kdeplot(df[df['Attrition'] == 1]['DistanceFromHome'], label='Employees who left', shade=True, color='r')
-sns.kdeplot(df[df['Attrition'] == 0]['DistanceFromHome'], label='Employees who stayed', shade=True, color='b')
-plt.xlabel('Distance From Home')
-plt.show()
+4. **Model Training**:
+   - Train multiple classification models, including Random Forest, Support Vector Machine (SVM), and XGBoost.
+   - Evaluate model performance using accuracy, precision, recall, and other metrics.
 
-# Boxplots
-plt.figure(figsize=(12, 6))
-sns.boxplot(x='Gender', y='MonthlyIncome', data=df)
-plt.show()
+5. **Model Evaluation and Saving**:
+   - Assess the performance of each model.
+   - Save the best-performing model (XGBoost) for future use.
 
-plt.figure(figsize=(12, 6))
-sns.boxplot(x='JobRole', y='MonthlyIncome', data=df)
-plt.xticks(rotation=45)
-plt.show()
+## Results
 
-# Label Encoding and One-Hot Encoding
-df_encoded = pd.get_dummies(df, columns=['BusinessTravel', 'Department', 'EducationField', 'Gender', 'JobRole', 'MaritalStatus'])
+- **Key Findings**: Employees who live closer to the office, have higher job satisfaction, and possess specific job roles are more likely to stay with the company.
+- **Model Performance**: The XGBoost Classifier achieved the best performance in terms of accuracy and other metrics.
 
-# Separate features and target
-X = df_encoded.drop('Attrition', axis=1)
-y = df_encoded['Attrition']
+## Future Work
 
-# Apply Min-Max Scaling
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+- **Improvement**: Further enhancements can be made by exploring additional features, trying advanced algorithms, or incorporating external data sources.
+- **Contribution**: Contributions to improve the model or add new features are welcome.
 
-# Train-Test Split
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.25, random_state=42)
+## Files
 
-# Create and Train Models
-models = {
-    'Random Forest Classifier': RandomForestClassifier(),
-    'Support Vector Machine': SVC(),
-    'XGBoost Classifier': XGBClassifier()
-}
+- `employee_data.csv`: Dataset used for analysis.
+- `best_model.pkl`: The saved model that achieved the best performance.
+- `Submission.csv`: File containing predictions made by the model on test data.
 
-# Train and Evaluate Models
-for model_name, model in models.items():
-    print(f"\nTraining {model_name}:")
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    
-    # Model Validation
-    print(f"\n{model_name} Evaluation:")
-    print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
-    print(f"Precision: {precision_score(y_test, y_pred):.4f}")
-    print(f"Recall: {recall_score(y_test, y_pred):.4f}")
-    print("Confusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    print("Classification Report:")
-    print(classification_report(y_test, y_pred))
+## Contact
 
-# Save the Best Model
-# Assume XGBoost performed best; save this model
-with open('best_model.pkl', 'wb') as model_file:
-    pickle.dump(models['XGBoost Classifier'], model_file)
-
-print("Model saved as 'best_model.pkl'")
-
-## Conclusions
- - **Employee Turnover:** A significant portion of the dataset indicated that many employees left the company.
- - **Satisfaction and Performance:** Employees with higher job satisfaction and performance ratings tend to stay longer.
- - **Distance from Home:** Employees who live closer to the office are more likely to stay.
- - **Stock Options and Job Roles:** Higher stock options and specific job roles are associated with higher retention rates.
-
-## Test Data
- - The model was applied to test data, and predictions were made using the best model.
- - The predicted results have been saved in `Submission.csv`.
-
-## Contribution
- Feel free to contribute by improving the model, adding new features, or refining the analysis.
+For any questions or contributions, please feel free to reach out.
